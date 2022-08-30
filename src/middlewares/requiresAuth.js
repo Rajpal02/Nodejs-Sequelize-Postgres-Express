@@ -23,6 +23,7 @@ function requiresAuth(tokenType = 'accessToken') {
       switch (tokenType) {
         case 'refreshToken':
           jwt = JwtUtils.verifyRefreshToken(token);
+          break;
         case 'accessToken':
         default:
           jwt = JwtUtils.verifyAccessToken(token);

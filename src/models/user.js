@@ -26,7 +26,7 @@ export default (sequelize) => {
         unique: true,
         validate: {
           isEmail: {
-            msg: 'Not avlid email address',
+            msg: 'Not a vslid email address',
           },
         },
       },

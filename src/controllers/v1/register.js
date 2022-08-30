@@ -16,35 +16,41 @@ router.post(
       return res.status(200).send({ success: false, message: 'User already exists!' });
     }
 
-     try {
-        const newUser = await User.create({ email, password })
-        const jwtPayload = { email }
+    try {
+      const result = await sequelize.transaction(async () => {
+        const newUser = await User.create({ email, password });
+        const jwtPayload = { email };
         const accessToken = JWTUtils.generateAccessToken(jwtPayload);
         const refreshToken = JWTUtils.generateRefreshToken(jwtPayload);
-        await newUser.createRefreshToken({ token: refreshToken })
+        await newUser.createRefreshToken({ token: refreshToken });
 
-        if(roles && Array.isArray(roles)) {
-            const rolestoSave = []
-            roles.forEach(role => {
-                const newRole = await Role.create({ role })
-                rolestoSave.push(newRole)
-            })
-            await newUser.addRoles(rolestoSave)
+        if (roles && Array.isArray(roles)) {
+          const rolestoSave = [];
+          for (const role of roles) {
+            const newRole = await Role.create({ role });
+            rolestoSave.push(newRole);
+          }
+          await newUser.addRoles(rolestoSave);
         }
-        
-        return res.send({
-            success: true,
-            message: 'User successfully created!',
-            data: {
-                accessToken,
-                refreshToken
-           } 
-        })
-    } catch(err) {
-        console.error('Error in creating the user:\n', err.stack)
-        return res.status(500).send({ success: false, message: err.message });
+
+        return { accessToken, refreshToken };
+      });
+
+      const { accessToken, refreshToken } = result;
+
+      return res.send({
+        success: true,
+        message: 'User successfully created!',
+        data: {
+          accessToken,
+          refreshToken,
+        },
+      });
+    } catch (err) {
+      console.error('Error in creating the user:\n', err.stack);
+      return res.status(500).send({ success: false, message: err.message });
     }
   })
 );
 
-export default router
+export default router;
